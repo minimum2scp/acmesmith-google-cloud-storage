@@ -11,7 +11,7 @@ module Acmesmith
     class GoogleCloudStorage < Base
       attr_reader :bucket, :prefix, :compute_engine_service_account, :private_key_json_file
 
-      def initialize(bucket:, prefix:, compute_engine_service_account:nil, private_key_json_file:nil)
+      def initialize(bucket:, prefix:nil, compute_engine_service_account:nil, private_key_json_file:nil)
         @bucket = bucket
         @prefix = prefix
         if @prefix && !@prefix.end_with?('/')
