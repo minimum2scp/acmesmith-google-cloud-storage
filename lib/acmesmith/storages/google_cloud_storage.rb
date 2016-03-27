@@ -39,9 +39,8 @@ module Acmesmith
       end
 
       def get_account_key
-        obj = @api.get_object(bucket, account_key_key)
-        media = get_media(obj.media_link)
-        AccountKey.new media
+        @api.get_object(bucket, account_key_key)
+        AccountKey.new @api.get_object(bucket, account_key_key, download_dest: StringIO.new).string
       rescue Google::Apis::ClientError => e
         if e.status_code == 404
           raise NotExist.new("Account key doesn't exist")
@@ -97,9 +96,13 @@ module Acmesmith
       def get_certificate(common_name, version: 'current')
         version = certificate_current(common_name) if version == 'current'
 
-        certificate = get_media(@api.get_object(bucket, certificate_key(common_name, version)).media_link)
-        chain       = get_media(@api.get_object(bucket, chain_key(common_name, version)).media_link)
-        private_key = get_media(@api.get_object(bucket, private_key_key(common_name, version)).media_link)
+        get = ->(key) do
+          @api.get_object(bucket, key, download_dest: StringIO.new).string
+        end
+
+        certificate = get.call(certificate_key(common_name, version))
+        chain       = get.call(chain_key(common_name, version))
+        private_key = get.call(private_key_key(common_name, version))
         Certificate.new(certificate, chain, private_key)
       rescue Google::Apis::ClientError => e
         if e.status_code == 404
@@ -156,8 +159,8 @@ module Acmesmith
       end
 
       def certificate_current(cn)
-        obj = @api.get_object(bucket, certificate_current_key(cn))
-        get_media(obj.media_link).chomp
+        @api.get_object(bucket, certificate_current_key(cn))
+        @api.get_object(bucket, certificate_current_key(cn), download_dest: StringIO.new).string.chomp
       rescue Google::Apis::ClientError => e
         if e.status_code == 404
           raise NotExist.new("Certificate for #{cn.inspect} of current version doesn't exist")
@@ -180,10 +183,6 @@ module Acmesmith
 
       def fullchain_key(cn, ver)
         "#{certificate_base_key(cn, ver)}/fullchain.pem"
-      end
-
-      def get_media(media_link)
-        open(media_link, {'Authorization' => "Bearer #{@api.authorization.access_token}"}).read
       end
 
       def load_json_key(filepath)
