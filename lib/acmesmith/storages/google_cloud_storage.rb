@@ -119,7 +119,9 @@ module Acmesmith
         page_token = nil
         loop do
           objects = @api.list_objects(bucket, prefix: certs_prefix, delimiter: '/', page_token: page_token)
-          list.concat objects.prefixes.map{|_| _.sub(certs_prefix_regexp, '').sub(/\/.+\z/,'').sub(/\/\z/, '')}
+          if objects.prefixes
+            list.concat objects.prefixes.map{|_| _.sub(certs_prefix_regexp, '').sub(/\/.+\z/,'').sub(/\/\z/, '')}
+          end
           break if objects.next_page_token.nil? || objects.next_page_token == page_token
           page_token = objects.next_page_token
         end
@@ -133,7 +135,9 @@ module Acmesmith
         page_token = nil
         loop do
           objects = @api.list_objects(bucket, prefix: cert_ver_prefix, delimiter: '/', page_token: page_token)
-          list.concat objects.prefixes.map{|_| _.sub(cert_ver_prefix_regexp, '').sub(/\/.+\z/, '').sub(/\/\z/, '') }
+          if objects.prefixes
+            list.concat objects.prefixes.map{|_| _.sub(cert_ver_prefix_regexp, '').sub(/\/.+\z/, '').sub(/\/\z/, '') }
+          end
           break if objects.next_page_token.nil? || objects.next_page_token == page_token
           page_token = objects.next_page_token
         end
