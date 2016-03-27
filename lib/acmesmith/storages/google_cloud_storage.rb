@@ -111,26 +111,30 @@ module Acmesmith
 
       def list_certificates
         certs_prefix = "#{prefix}certs/"
-        objects = @api.fetch_all do |token, s|
-          ## With `delimiter: "/"` parameter, `NoMethodError: undefined method `each' for nil:NilClass` happens in
-          ## google-api-client-0.9.4/lib/google/apis/core/base_service.rb:66:in `block in each'
-          s.list_objects(bucket, prefix: certs_prefix, page_token: token)
+        certs_prefix_regexp = /\A#{Regexp.escape(certs_prefix)}/
+        list = []
+        page_token = nil
+        loop do
+          objects = @api.list_objects(bucket, prefix: certs_prefix, delimiter: '/', page_token: page_token)
+          list.concat objects.prefixes.map{|_| _.sub(certs_prefix_regexp, '').sub(/\/.+\z/,'').sub(/\/\z/, '')}
+          break if objects.next_page_token.nil? || objects.next_page_token == page_token
+          page_token = objects.next_page_token
         end
-        objects.map{ |obj|
-          regexp = /\A#{Regexp.escape(certs_prefix)}/
-          obj.name.sub(regexp, '').sub(/\/.+\z/, '').sub(/\/\z/, '')
-        }.uniq
+        list.uniq
       end
 
       def list_certificate_versions(common_name)
         cert_ver_prefix = "#{prefix}certs/#{common_name}/"
-        objects = @api.fetch_all do |token, s|
-          s.list_objects(bucket, prefix: cert_ver_prefix, page_token: token)
+        cert_ver_prefix_regexp = /\A#{Regexp.escape(cert_ver_prefix)}/
+        list = []
+        page_token = nil
+        loop do
+          objects = @api.list_objects(bucket, prefix: cert_ver_prefix, delimiter: '/', page_token: page_token)
+          list.concat objects.prefixes.map{|_| _.sub(cert_ver_prefix_regexp, '').sub(/\/.+\z/, '').sub(/\/\z/, '') }
+          break if objects.next_page_token.nil? || objects.next_page_token == page_token
+          page_token = objects.next_page_token
         end
-        objects.map { |obj|
-          regexp = /\A#{Regexp.escape(cert_ver_prefix)}/
-          obj.name.sub(regexp, '').sub(/\/.+\z/, '').sub(/\/\z/, '')
-        }.uniq.reject { |_| _ == 'current' }
+        list.uniq.reject{ |_| _ == 'current' }
       end
 
       def get_current_certificate_version(common_name)
