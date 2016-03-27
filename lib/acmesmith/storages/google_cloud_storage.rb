@@ -112,6 +112,8 @@ module Acmesmith
       def list_certificates
         certs_prefix = "#{prefix}certs/"
         objects = @api.fetch_all do |token, s|
+          ## With `delimiter: "/"` parameter, `NoMethodError: undefined method `each' for nil:NilClass` happens in
+          ## google-api-client-0.9.4/lib/google/apis/core/base_service.rb:66:in `block in each'
           s.list_objects(bucket, prefix: certs_prefix, page_token: token)
         end
         objects.map{ |obj|
