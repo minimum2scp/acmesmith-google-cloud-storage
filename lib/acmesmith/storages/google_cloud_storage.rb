@@ -65,7 +65,12 @@ module Acmesmith
           name: account_key_key,
           content_type: 'application/x-pem-file'
         )
-        @api.insert_object(bucket, obj, upload_source: StringIO.new(key.export(passphrase)))
+        @api.insert_object(
+          bucket,
+          obj,
+          upload_source: StringIO.new(key.export(passphrase)),
+          content_type: 'application/x-pem-file',
+        )
       end
 
       def put_certificate(cert, passphrase = nil, update_current: true)
@@ -76,7 +81,12 @@ module Acmesmith
             name: key,
             content_type: 'application/x-pem-file',
           )
-          @api.insert_object(bucket, obj, upload_source: StringIO.new(body))
+          @api.insert_object(
+            bucket,
+            obj,
+            upload_source: StringIO.new(body),
+            content_type: 'application/x-pem-file',
+          )
         end
 
         put.call certificate_key(cert.common_name, cert.version), "#{h[:certificate].rstrip}\n"
@@ -89,6 +99,7 @@ module Acmesmith
             bucket,
             Google::Apis::StorageV1::Object.new(name: certificate_current_key(cert.common_name), content_type: 'text/plain'),
             upload_source: StringIO.new(cert.version),
+            content_type: 'text/plain',
           )
         end
       end
