@@ -10,7 +10,7 @@ This gem is a plugin for [Acmesmith](https://github.com/sorah/acmesmith) and imp
 
 ### Installation
 
-Install `acmesith-google-cloud-storage` gem along with `acmesmith`. You can just do `gem install acmesith-google-cloud-storage` or use Bundler if you want.
+Install `acmesmith-google-cloud-storage` gem along with `acmesmith`. You can just do `gem install acmesmith-google-cloud-storage` or use Bundler if you want.
 
 ### Configuration
 
