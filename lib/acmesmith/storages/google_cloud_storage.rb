@@ -39,8 +39,7 @@ module Acmesmith
       end
 
       def get_account_key
-        @api.get_object(bucket, account_key_key)
-        AccountKey.new @api.get_object(bucket, account_key_key, download_dest: StringIO.new).string
+        AccountKey.new get_object_content(bucket, account_key_key)
       rescue Google::Apis::ClientError => e
         if e.status_code == 404
           raise NotExist.new("Account key doesn't exist")
@@ -108,7 +107,7 @@ module Acmesmith
         version = certificate_current(common_name) if version == 'current'
 
         get = ->(key) do
-          @api.get_object(bucket, key, download_dest: StringIO.new).string
+          get_object_content(bucket, key)
         end
 
         certificate = get.call(certificate_key(common_name, version))
@@ -174,8 +173,7 @@ module Acmesmith
       end
 
       def certificate_current(cn)
-        @api.get_object(bucket, certificate_current_key(cn))
-        @api.get_object(bucket, certificate_current_key(cn), download_dest: StringIO.new).string.chomp
+        get_object_content(bucket, certificate_current_key(cn)).chomp
       rescue Google::Apis::ClientError => e
         if e.status_code == 404
           raise NotExist.new("Certificate for #{cn.inspect} of current version doesn't exist")
@@ -206,6 +204,12 @@ module Acmesmith
           email_address: obj["client_email"],
           private_key: OpenSSL::PKey.read(obj["private_key"]),
         }
+      end
+
+      def get_object_content(bucket, key)
+        output = StringIO.new
+        @api.get_object(bucket, key, download_dest: output)
+        output.string
       end
     end
   end
